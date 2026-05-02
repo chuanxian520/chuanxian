@@ -9,8 +9,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 
-// 全局数据
-let users = [];
+// ========== 内存用户库（重启不丢失可换json文件，先用内存方便）==========
+let userList = [];
+
+// ========== 原有业务数据 ==========
 let orders = [];
 let strings = [
   { id: 1, string_name: "BG65", price: 25 },
@@ -20,7 +22,30 @@ let strings = [
 let pipePrice = 15;
 const adminPassword = "admin123";
 
-// 管理员登录校验
+// ========== 【新增】用户注册接口 ==========
+app.post('/register', (req, res) => {
+  const { username, password } = req.body;
+  // 简单去重
+  if (userList.find(u => u.username === username)) {
+    return res.send("<script>alert('账号已存在');history.back()</script>");
+  }
+  userList.push({ username, password });
+  res.redirect('/login.html');
+});
+
+// ========== 【新增】用户登录接口 ==========
+app.post('/do-login', (req, res) => {
+  const { username, password } = req.body;
+  const user = userList.find(u => u.username === username && u.password === password);
+  if (user) {
+    res.cookie("user", username, { path: "/" });
+    res.redirect("/index.html");
+  } else {
+    res.send("<script>alert('账号或密码错误');history.back()</script>");
+  }
+});
+
+// ========== 原有管理员逻辑 ==========
 app.post('/admin-check', (req, res) => {
   const pwd = req.body.pwd;
   if (pwd === adminPassword) {
@@ -36,7 +61,7 @@ app.get('/admin-logout', (req, res) => {
   res.redirect("/admin-login.html");
 });
 
-// 线材管理接口
+// 线材管理
 app.post('/admin/add-string', (req, res) => {
   const { string_name, price } = req.body;
   strings.push({ id: Date.now(), string_name, price: Number(price) });
@@ -62,9 +87,9 @@ app.get('/api/pipe-price', (req, res) => {
   res.json({ price: pipePrice });
 });
 
-// 用户&订单接口
+// 订单管理
 app.get('/api/user-list', (req, res) => {
-  res.json(req.cookies.admin ? users : []);
+  res.json(req.cookies.admin ? userList.map(u=>u.username) : []);
 });
 
 app.get('/api/all-orders', (req, res) => {
@@ -84,49 +109,7 @@ app.post('/admin/del-order', (req, res) => {
   res.redirect('/admin.html');
 });
 
-// ========== 微信登录（已修复，直接写死，无变量报错） ==========
-app.get('/wx/callback', (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.redirect('/login.html');
-
-  const tokenUrl1 = `https://api.weixin.qq.com/sns/oauth2/access_token?appid=wx9feec4bdaea6a15c&secret=795a1be950003da3b770e02bc03af286&code=${code}&grant_type=authorization_code`;
-
-  https.get(tokenUrl1, (tokenRes) => {
-    let tokenData = '';
-    tokenRes.on('data', chunk => tokenData += chunk);
-    tokenRes.on('end', () => {
-      try {
-        const token = JSON.parse(tokenData);
-        const { openid, access_token } = token;
-
-        const userUrl1 = `https://api.weixin.qq.com/sns/userinfo?access_token=${access_token}&openid=${openid}&lang=zh_CN`;
-        https.get(userUrl1, (userRes) => {
-          let userData = '';
-          userRes.on('data', chunk => userData += chunk);
-          userRes.on('end', () => {
-            const wx = JSON.parse(userData);
-            let user = users.find(x => x.wxOpenid === openid);
-            if (!user) {
-              user = {
-                username: wx.nickname,
-                wxOpenid: openid,
-                nickname: wx.nickname,
-                headimgurl: wx.headimgurl
-              };
-              users.push(user);
-            }
-            res.cookie('user', user.username);
-            res.redirect('/index.html');
-          });
-        });
-      } catch (e) {
-        res.redirect('/login.html');
-      }
-    });
-  });
-});
-
-// 提交订单
+// 提交订单（原有逻辑完全不变）
 app.post('/submit-order', (req, res) => {
   const user = req.cookies.user;
   if (!user) return res.redirect('/login.html');
@@ -158,7 +141,7 @@ app.get('/logout', (req, res) => {
   res.redirect('/login.html');
 });
 
-// 微信域名校验文件路由
+// 微信校验文件（保留，不用可删）
 app.get('/MP_verify_2U8OM66OBGQnXR0.txt', (req, res) => {
   res.send('2U8OM66OBGQnXR0');
 });
