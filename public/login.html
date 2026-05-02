@@ -14,7 +14,7 @@ body{background:#f5f5f5;padding:30px}
 <script>
 function login(){
   const appid = "wx9feec4bdaea6a15c";
-  const redirect = encodeURIComponent("https://"+window.location.host+"/wx/callback");
+  const redirect = encodeURIComponent("https://chuanxian-production.up.railway.app/wx/callback");
   location.href = "https://open.weixin.qq.com/connect/oauth2/authorize?appid="+appid+"&redirect_uri="+redirect+"&response_type=code&scope=snsapi_userinfo#wechat_redirect";
 }
 </script>
