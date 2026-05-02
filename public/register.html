@@ -1,41 +1,37 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>注册</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑";}
-body{background:#f3f4f6;padding:20px;}
-.box{max-width:400px;margin:50px auto;background:#fff;padding:30px;border-radius:12px;}
-h2{text-align:center;margin-bottom:20px;}
-input{width:100%;padding:14px;margin-bottom:12px;border:1px solid #ddd;border-radius:8px;font-size:16px;}
-button{width:100%;padding:14px;background:#007AFF;color:#fff;border:none;border-radius:8px;font-size:16px;}
-.to-login{text-align:center;margin-top:15px;}
-.to-login a{color:#007AFF;text-decoration:none;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
+body{background:#f3f4f6;padding:20px}
+.box{max-width:400px;margin:50px auto;background:#fff;padding:30px;border-radius:12px}
+h2{text-align:center;margin-bottom:20px}
+input{width:100%;padding:14px;margin:8px 0;border:1px solid #eee;border-radius:8px}
+button{width:100%;padding:14px;background:#007AFF;color:white;border:none;border-radius:8px}
+a{display:block;text-align:center;margin-top:15px;color:#007AFF}
 </style>
 </head>
 <body>
 <div class="box">
-  <h2>注册</h2>
-  <form id="regForm">
-    <input type="text" name="username" placeholder="请输入账号" required>
-    <input type="password" name="password" placeholder="请输入密码" required>
-    <button type="submit">注册</button>
-  </form>
-  <div class="to-login">
-    已有账号？<a href="login.html">去登录</a>
-  </div>
+<h2>注册</h2>
+<form id="regForm">
+<input name="username" placeholder="用户名" required>
+<input type="password" name="password" placeholder="密码" required>
+<button type="submit">注册</button>
+</form>
+<a href="login.html">去登录</a>
 </div>
-
 <script>
-document.getElementById('regForm').addEventListener('submit', function(e) {
+document.getElementById("regForm").addEventListener("submit",function(e){
   e.preventDefault();
-  fetch('/register', {
-    method: 'POST',
-    body: new URLSearchParams(new FormData(this))
-  }).then(res => res.text()).then(html => {
-    document.querySelector('.box').innerHTML = html;
+  fetch("/register",{
+    method:"POST",
+    body:new URLSearchParams(new FormData(this))
+  }).then(res=>res.text()).then(html=>{
+    document.querySelector(".box").innerHTML = html;
   });
 });
 </script>
