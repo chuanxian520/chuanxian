@@ -1,59 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <title>我的订单</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
-body{background:#f3f4f6;padding:20px}
-.box{max-width:600px;margin:30px auto;background:#fff;padding:25px;border-radius:12px}
-h2{text-align:center;margin-bottom:20px}
-.order{border:1px solid #eee;border-radius:8px;padding:15px;margin-bottom:10px}
-.pay-btn{padding:8px 14px;background:#07C160;color:white;border:none;border-radius:6px;margin-top:6px}
-a{color:#007AFF;text-decoration:none;margin-right:10px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑;}
+body{background:#f5f7fa;padding:30px;}
+.box{max-width:1000px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+a{color:#007bff;text-decoration:none;margin:0 10px;}
+table{width:100%;border-collapse:collapse;margin-top:20px;}
+th,td{border:1px solid #eee;padding:10px;text-align:center;}
+th{background:#f8f9fa;}
 </style>
 </head>
 <body>
 <div class="box">
-  <a href="index.html">返回下单</a>
-  <a href="logout">退出登录</a>
-  <h2>我的订单</h2>
-  <div id="orderList"></div>
+  <div class="top-bar">
+    <h2>我的穿线订单</h2>
+    <div>
+      <a href="/">继续下单</a>
+      <a href="/logout">退出登录</a>
+    </div>
+  </div>
+
+  <table>
+    <tr>
+      <th>订单号</th>
+      <th>球拍</th>
+      <th>球线</th>
+      <th>竖线磅数</th>
+      <th>横线磅数</th>
+      <th>联系电话</th>
+      <th>地址</th>
+      <th>备注</th>
+      <th>状态</th>
+    </tr>
+    <tbody id="myOrders"></tbody>
+  </table>
 </div>
 
 <script>
-function loadOrders() {
-  fetch("/api/my-orders")
-    .then(res => res.json())
-    .then(list => {
-      let html = "";
-      if (list.length === 0) {
-        html = "<p>暂无订单</p>";
-      } else {
-        list.forEach(item => {
-          html += `
-          <div class="order">
-            <p>订单号：${item.orderNo}</p>
-            <p>球线：${item.stringName}｜护线管：${item.pipe}</p>
-            <p>磅数：${item.mainTension}/${item.crossTension}</p>
-            <p>应付总价：¥${item.totalPrice}</p>
-            <p>状态：${item.status}</p>
-            ${item.status === "未支付" 
-              ? `<button class="pay-btn" onclick="goToPayPage('${item.orderNo}')">去支付</button>` 
-              : "<p style='color:#666'>请等待管理员处理</p>"}
-          </div>`;
-        });
-      }
-      document.getElementById("orderList").innerHTML = html;
-    });
+// 未登录跳转到登录页
+if(!document.cookie.includes("user=")){
+  alert("请先登录！");
+  location.href = "/login.html";
 }
 
-function goToPayPage(orderNo) {
-  window.location.href = "/pay-weixin?orderNo=" + orderNo;
-}
-
-loadOrders();
+// 加载自己的订单
+fetch("/api/my-orders")
+.then(res=>res.json())
+.then(list=>{
+  let html = "";
+  if(list.length === 0){
+    myOrders.innerHTML = `<tr><td colspan="9">暂无订单</td></tr>`;
+    return;
+  }
+  list.forEach(v=>{
+    html += `
+    <tr>
+      <td>${v.orderNo}</td>
+      <td>${v.racketType}</td>
+      <td>${v.stringName}</td>
+      <td>${v.mainTension}</td>
+      <td>${v.crossTension}</td>
+      <td>${v.phone}</td>
+      <td>${v.address||"-"}</td>
+      <td>${v.remark||"-"}</td>
+      <td>${v.status}</td>
+    </tr>`;
+  });
+  myOrders.innerHTML = html;
+});
 </script>
 </body>
 </html>

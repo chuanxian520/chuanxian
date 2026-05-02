@@ -1,153 +1,120 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
-const https = require('https');
 const app = express();
+const port = process.env.PORT || 3000;
+const cookieParser = require('cookie-parser');
 
 // 中间件
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-// ========== 内存用户库（重启不丢失可换json文件，先用内存方便）==========
-let userList = [];
-
-// ========== 原有业务数据 ==========
+// 数据
+let users = [];
 let orders = [];
 let strings = [
-  { id: 1, string_name: "BG65", price: 25 },
-  { id: 2, string_name: "BG80", price: 35 },
-  { id: 3, string_name: "NBG95", price: 45 }
+    { id:1, string_name:"BG65" },
+    { id:2, string_name:"BG80" },
+    { id:3, string_name:"NBG95" }
 ];
-let pipePrice = 15;
-const adminPassword = "admin123";
+let adminPassword = "123456";
 
-// ========== 【新增】用户注册接口 ==========
+// 注册
 app.post('/register', (req, res) => {
-  const { username, password } = req.body;
-  // 简单去重
-  if (userList.find(u => u.username === username)) {
-    return res.send("<script>alert('账号已存在');history.back()</script>");
-  }
-  userList.push({ username, password });
-  res.redirect('/login.html');
+    const { username, password } = req.body;
+    const exists = users.some(u => u.username === username);
+    if (exists) return res.send("用户名已存在 <a href='/register.html'>返回</a>");
+    users.push({ username, password });
+    res.send("注册成功！<a href='/login.html'>去登录</a>");
 });
 
-// ========== 【新增】用户登录接口 ==========
-app.post('/do-login', (req, res) => {
-  const { username, password } = req.body;
-  const user = userList.find(u => u.username === username && u.password === password);
-  if (user) {
-    res.cookie("user", username, { path: "/" });
-    res.redirect("/index.html");
-  } else {
-    res.send("<script>alert('账号或密码错误');history.back()</script>");
-  }
+// 用户登录
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) return res.send("账号或密码错误 <a href='/login.html'>返回</a>");
+    res.cookie("user", username, { path:"/" });
+    res.redirect("/");
 });
 
-// ========== 原有管理员逻辑 ==========
-app.post('/admin-check', (req, res) => {
-  const pwd = req.body.pwd;
-  if (pwd === adminPassword) {
-    res.cookie("admin", "ok");
+// 退出用户
+app.get('/logout', (req, res) => {
+    res.clearCookie("user", { path:"/" });
+    res.redirect("/login.html");
+});
+
+// 提交订单
+app.post('/submit-order', (req, res) => {
+    const user = req.cookies?.user || "游客";
+    const { racketType, stringName, mainTension, crossTension, phone, address, remark } = req.body;
+    orders.push({
+        orderNo:"ORD"+Date.now(),
+        username:user,
+        racketType, stringName, mainTension, crossTension, phone, address, remark,
+        status:"待处理"
+    });
+    res.redirect("/my-orders.html"); // 提交后跳转到自己的订单页
+});
+
+// 球线列表
+app.get('/api/string-list', (req, res) => res.json(strings));
+
+// 用户订单查询接口（新增！只返回当前登录用户的订单）
+app.get('/api/my-orders', (req, res) => {
+    const username = req.cookies?.user;
+    if (!username) return res.json([]);
+    const myOrders = orders.filter(o => o.username === username);
+    res.json(myOrders);
+});
+
+// 管理员接口
+app.post('/admin-login', (req, res) => {
+    if (req.body.pwd === adminPassword) {
+        res.cookie("adminAuth","ok",{ path:"/" });
+        res.redirect("/admin.html");
+    } else res.send("密码错误 <a href='/admin.html'>返回</a>");
+});
+
+app.get('/logoutAdmin', (req, res) => {
+    res.clearCookie("adminAuth",{ path:"/" });
     res.redirect("/admin.html");
-  } else {
-    res.send("密码错误，<a href='admin-login.html'>返回</a>");
-  }
 });
 
-app.get('/admin-logout', (req, res) => {
-  res.clearCookie("admin");
-  res.redirect("/admin-login.html");
+app.post('/change-admin-pwd', (req, res) => {
+    adminPassword = req.body.newPwd;
+    res.send("修改成功 <a href='/admin.html'>返回</a>");
 });
 
-// 线材管理
-app.post('/admin/add-string', (req, res) => {
-  const { string_name, price } = req.body;
-  strings.push({ id: Date.now(), string_name, price: Number(price) });
-  res.redirect('/admin.html');
-});
-
-app.post('/admin/del-string', (req, res) => {
-  const { id } = req.body;
-  strings = strings.filter(s => s.id != id);
-  res.redirect('/admin.html');
-});
-
-app.get('/api/string-list', (req, res) => {
-  res.json(strings);
-});
-
-app.post('/admin/set-pipe', (req, res) => {
-  pipePrice = Number(req.body.pipePrice);
-  res.redirect('/admin.html');
-});
-
-app.get('/api/pipe-price', (req, res) => {
-  res.json({ price: pipePrice });
-});
-
-// 订单管理
-app.get('/api/user-list', (req, res) => {
-  res.json(req.cookies.admin ? userList.map(u=>u.username) : []);
-});
-
-app.get('/api/all-orders', (req, res) => {
-  res.json(req.cookies.admin ? orders : []);
-});
+app.get('/api/all-orders', (req, res) => res.json(orders));
 
 app.post('/update-order-status', (req, res) => {
-  const { orderNo, status } = req.body;
-  const o = orders.find(x => x.orderNo === orderNo);
-  if (o) o.status = status;
-  res.redirect('/admin.html');
+    const o = orders.find(x => x.orderNo === req.body.orderNo);
+    if (o) o.status = req.body.status;
+    res.redirect("/admin.html");
 });
 
 app.post('/admin/del-order', (req, res) => {
-  const { orderNo } = req.body;
-  orders = orders.filter(x => x.orderNo !== orderNo);
-  res.redirect('/admin.html');
+    orders = orders.filter(x => x.orderNo !== req.body.orderNo);
+    res.redirect("/admin.html");
 });
 
-// 提交订单（原有逻辑完全不变）
-app.post('/submit-order', (req, res) => {
-  const user = req.cookies.user;
-  if (!user) return res.redirect('/login.html');
-
-  const { racketType, stringName, pipe, phone, address, remark } = req.body;
-  const str = strings.find(s => s.string_name === stringName);
-  const stringPrice = str ? str.price : 0;
-  const pipeFee = pipe === 'on' ? pipePrice : 0;
-  const totalPrice = stringPrice + pipeFee;
-  const orderNo = "ORD" + Date.now();
-
-  orders.push({
-    orderNo, username: user, racketType, stringName,
-    pipe: pipe === 'on' ? "是" : "否",
-    stringPrice, pipeFee, totalPrice,
-    phone, address, remark, status: "待处理"
-  });
-  res.redirect('/my-orders.html');
+app.post('/admin/add-string', (req, res) => {
+    const newId = strings.length ? Math.max(...strings.map(x=>x.id)) + 1 : 1;
+    strings.push({ id:newId, string_name:req.body.name });
+    res.redirect("/admin.html");
 });
 
-app.get('/api/my-orders', (req, res) => {
-  const user = req.cookies.user;
-  if (!user) return res.json([]);
-  res.json(orders.filter(o => o.username === user));
+app.post('/admin/del-string', (req, res) => {
+    strings = strings.filter(x => x.id != req.body.id);
+    res.redirect("/admin.html");
 });
 
-app.get('/logout', (req, res) => {
-  res.clearCookie('user');
-  res.redirect('/login.html');
-});
-
-// 微信校验文件（保留，不用可删）
-app.get('/MP_verify_2U8OM66OBGQnXR0.txt', (req, res) => {
-  res.send('2U8OM66OBGQnXR0');
-});
-
-// 启动服务
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`服务已启动，端口：${PORT}`);
+// 启动
+app.listen(port, () => {
+    console.log("服务已启动");
+    console.log("用户下单页: http://localhost:3000");
+    console.log("用户订单页: http://localhost:3000/my-orders.html");
+    console.log("用户登录页: http://localhost:3000/login.html");
+    console.log("用户注册页: http://localhost:3000/register.html");
+    console.log("管理员后台: http://localhost:3000/admin.html");
 });

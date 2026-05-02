@@ -1,48 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>在线下单</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>穿线下单</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
-body{background:#f3f4f6;padding:20px}
-.box{max-width:500px;margin:30px auto;background:#fff;padding:25px;border-radius:12px}
-h2{text-align:center;margin-bottom:20px}
-input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #eee;border-radius:8px}
-button{width:100%;padding:14px;background:#007AFF;color:white;border:none;border-radius:8px;font-size:16px}
-a{color:#007AFF;text-decoration:none;margin-right:10px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑;}
+body{background:#f5f7fa;padding:30px;}
+.box{max-width:600px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+h2{text-align:center;margin-bottom:20px;}
+.item{margin-bottom:15px;}
+label{display:block;margin-bottom:6px;}
+input,select,textarea{width:100%;padding:10px;border:1px solid #eee;border-radius:6px;}
+button{width:100%;padding:12px;background:#007bff;color:#fff;border:none;border-radius:6px;}
+a{color:#007bff;text-decoration:none;}
 </style>
 </head>
 <body>
 <div class="box">
-  <div style="margin-bottom:15px">
-    <a href="my-orders.html">我的订单</a>
-    <a href="logout">退出登录</a>
+  <div class="top-bar">
+    <h2>羽毛球穿线下单</h2>
+    <div>
+      <a href="/my-orders.html">我的订单</a>
+      <a href="/logout">退出</a>
+    </div>
   </div>
-  <h2>羽毛球拍穿线</h2>
   <form action="/submit-order" method="post">
-    <input name="racketType" placeholder="球拍型号" required>
-    <select id="stringSelect" name="stringName" required>
-      <option value="">请选择球线</option>
-    </select>
-    <input name="mainTension" placeholder="竖磅" required>
-    <input name="crossTension" placeholder="横磅" required>
-    <label style="display:block;margin:8px 0;"><input type="checkbox" name="pipe"> 更换全套护线管</label>
-    <input name="phone" placeholder="联系电话" required>
-    <input name="address" placeholder="取拍地址" required>
-    <textarea name="remark" placeholder="备注" rows="3"></textarea>
-    <button type="submit">提交订单</button>
+    <div class="item"><label>球拍型号 *</label><input name="racketType" required></div>
+    <div class="item"><label>球线型号 *</label><select name="stringName" id="sl" required></select></div>
+    <div class="item"><label>竖线磅数 *</label><input name="mainTension" required></div>
+    <div class="item"><label>横线磅数 *</label><input name="crossTension" required></div>
+    <div class="item"><label>联系电话 *</label><input name="phone" required></div>
+    <div class="item"><label>取件地址</label><input name="address"></div>
+    <div class="item"><label>备注说明</label><textarea name="remark" rows="3"></textarea></div>
+    <button>提交订单</button>
   </form>
 </div>
 <script>
-fetch("/api/string-list").then(res=>res.json()).then(data=>{
-  let sel = document.getElementById("stringSelect");
-  data.forEach(s=>{
-    let opt = document.createElement("option");
-    opt.value = s.string_name;
-    opt.innerText = s.string_name + " - ¥" + s.price;
-    sel.appendChild(opt);
+fetch("/api/string-list").then(r=>r.json()).then(list=>{
+  list.forEach(s=>{
+    sl.innerHTML += `<option>${s.string_name}</option>`;
   });
 });
 </script>
