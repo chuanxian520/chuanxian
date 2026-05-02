@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>在线下单</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
+body{background:#f3f4f6;padding:20px}
+.box{max-width:500px;margin:30px auto;background:#fff;padding:25px;border-radius:12px}
+h2{text-align:center;margin-bottom:20px}
+input,select,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #eee;border-radius:8px}
+button{width:100%;padding:14px;background:#007AFF;color:white;border:none;border-radius:8px;font-size:16px}
+a{color:#007AFF;text-decoration:none;margin-right:10px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div style="margin-bottom:15px">
+    <a href="my-orders.html">我的订单</a>
+    <a href="logout">退出登录</a>
+  </div>
+  <h2>羽毛球拍穿线</h2>
+  <form action="/submit-order" method="post">
+    <input name="racketType" placeholder="球拍型号" required>
+    <select id="stringSelect" name="stringName" required>
+      <option value="">请选择球线</option>
+    </select>
+    <input name="mainTension" placeholder="竖磅" required>
+    <input name="crossTension" placeholder="横磅" required>
+    <label style="display:block;margin:8px 0;"><input type="checkbox" name="pipe"> 更换全套护线管</label>
+    <input name="phone" placeholder="联系电话" required>
+    <input name="address" placeholder="取拍地址" required>
+    <textarea name="remark" placeholder="备注" rows="3"></textarea>
+    <button type="submit">提交订单</button>
+  </form>
+</div>
+<script>
+fetch("/api/string-list").then(res=>res.json()).then(data=>{
+  let sel = document.getElementById("stringSelect");
+  data.forEach(s=>{
+    let opt = document.createElement("option");
+    opt.value = s.string_name;
+    opt.innerText = s.string_name + " - ¥" + s.price;
+    sel.appendChild(opt);
+  });
+});
+</script>
+</body>
+</html>

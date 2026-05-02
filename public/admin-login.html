@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>管理员登录</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+body{background:#f3f4f6;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.box{background:#fff;padding:30px;border-radius:12px;width:320px}
+h2{text-align:center;margin-bottom:20px}
+input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:6px}
+button{width:100%;padding:12px;background:#07C160;color:white;border:none;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>管理员登录</h2>
+  <form action="/admin-check" method="post">
+    <input type="password" name="pwd" placeholder="输入管理员密码" required>
+    <button type="submit">登录</button>
+  </form>
+</div>
+</body>
+</html>

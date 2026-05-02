@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理员后台</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑;}
+  body{background:#f5f7fa;padding:15px;}
+  .header{background:#fff;padding:15px 20px;border-radius:10px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center;}
+  .header h1{font-size:18px;color:#333;}
+  .btn-logout{background:#ff4d4f;color:#fff;border:none;padding:8px 14px;border-radius:6px;}
+  .tab{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;}
+  .tab button{padding:10px 16px;background:#fff;border:none;border-radius:8px;}
+  .tab button.active{background:#007aff;color:#fff;}
+  .page{display:none;background:#fff;padding:20px;border-radius:10px;}
+  .page.active{display:block;}
+  table{width:100%;border-collapse:collapse;margin-top:10px;}
+  th,td{padding:10px;text-align:left;border-bottom:1px solid #eee;}
+  th{background:#fafafa;}
+  img.avatar{width:40px;height:40px;border-radius:50%;}
+  .form-item{margin-bottom:12px;}
+  .form-item input{width:100%;height:40px;padding:0 10px;border:1px solid #ddd;border-radius:6px;}
+  .btn-sub{background:#007aff;color:#fff;border:none;padding:8px 14px;border-radius:6px;}
+  .btn-del{background:#ff4d4f;color:#fff;border:none;padding:6px 10px;border-radius:6px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>羽毛球穿线系统 - 管理后台</h1>
+  <button class="btn-logout" onclick="logout()">退出登录</button>
+</div>
+
+<div class="tab">
+  <button class="active" onclick="show(0)">用户管理</button>
+  <button onclick="show(1)">订单管理</button>
+  <button onclick="show(2)">球线管理</button>
+  <button onclick="show(3)">护线管价格</button>
+</div>
+
+<!-- 用户管理 -->
+<div class="page active" id="p0">
+  <h3>微信用户列表</h3>
+  <table>
+    <tr>
+      <th>头像</th>
+      <th>昵称</th>
+      <th>OpenID</th>
+      <th>注册时间</th>
+    </tr>
+    <tbody id="userList"></tbody>
+  </table>
+</div>
+
+<!-- 订单管理 -->
+<div class="page" id="p1">
+  <h3>全部订单</h3>
+  <table>
+    <tr>
+      <th>订单号</th>
+      <th>用户</th>
+      <th>球拍/线</th>
+      <th>金额</th>
+      <th>状态</th>
+      <th>操作</th>
+    </tr>
+    <tbody id="orderList"></tbody>
+  </table>
+</div>
+
+<!-- 球线管理 -->
+<div class="page" id="p2">
+  <h3>添加球线</h3>
+  <div class="form-item">
+    <input type="text" id="stringName" placeholder="线名称">
+  </div>
+  <div class="form-item">
+    <input type="number" id="stringPrice" placeholder="价格">
+  </div>
+  <button class="btn-sub" onclick="addString()">添加</button>
+
+  <h3 style="margin-top:20px;">球线列表</h3>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>名称</th>
+      <th>价格</th>
+      <th>操作</th>
+    </tr>
+    <tbody id="stringList"></tbody>
+  </table>
+</div>
+
+<!-- 护线管价格 -->
+<div class="page" id="p3">
+  <h3>设置护线管单价</h3>
+  <div class="form-item">
+    <input type="number" id="pipePrice" placeholder="输入价格">
+  </div>
+  <button class="btn-sub" onclick="setPipe()">保存</button>
+</div>
+
+<script>
+let pages = document.querySelectorAll('.page');
+let tabs = document.querySelectorAll('.tab button');
+
+function show(index){
+  pages.forEach(p=>p.classList.remove('active'));
+  tabs.forEach(t=>t.classList.remove('active'));
+  pages[index].classList.add('active');
+  tabs[index].classList.add('active');
+}
+
+// 加载用户
+function loadUser(){
+  fetch('/api/user-list').then(res=>res.json()).then(list=>{
+    let html = '';
+    list.forEach(u=>{
+      html += `
+      <tr>
+        <td><img class="avatar" src="${u.headimgurl||''}"></td>
+        <td>${u.nickname||u.username}</td>
+        <td>${u.wxOpenid||''}</td>
+        <td>${u.createTime||''}</td>
+      </tr>`;
+    });
+    userList.innerHTML = html;
+  });
+}
+
+// 加载订单
+function loadOrder(){
+  fetch('/api/all-orders').then(res=>res.json()).then(list=>{
+    let html = '';
+    list.forEach(o=>{
+      html += `
+      <tr>
+        <td>${o.orderNo}</td>
+        <td>${o.username}</td>
+        <td>${o.racketType}<br>${o.stringName}</td>
+        <td>¥${o.totalPrice}</td>
+        <td>${o.status}</td>
+        <td>
+          <button class="btn-del" onclick="setStatus('${o.orderNo}','已支付')">设已支付</button>
+          <button class="btn-del" onclick="delOrder('${o.orderNo}')">删除</button>
+        </td>
+      </tr>`;
+    });
+    orderList.innerHTML = html;
+  });
+}
+
+// 加载球线
+function loadString(){
+  fetch('/api/string-list').then(res=>res.json()).then(list=>{
+    let html = '';
+    list.forEach(s=>{
+      html += `
+      <tr>
+        <td>${s.id}</td>
+        <td>${s.string_name}</td>
+        <td>¥${s.price}</td>
+        <td><button class="btn-del" onclick="delString(${s.id})">删除</button></td>
+      </tr>`;
+    });
+    stringList.innerHTML = html;
+  });
+}
+
+// 添加球线
+function addString(){
+  let name = document.getElementById('stringName').value;
+  let price = document.getElementById('stringPrice').value;
+  if(!name||!price)return alert('填写完整');
+  fetch('/admin/add-string',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'name='+name+'&price='+price
+  }).then(()=>loadString());
+}
+
+// 删除球线
+function delString(id){
+  fetch('/admin/del-string',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'id='+id
+  }).then(()=>loadString());
+}
+
+// 设置护线管
+function setPipe(){
+  let p = document.getElementById('pipePrice').value;
+  fetch('/admin/set-pipe',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'price='+p
+  }).then(()=>alert('保存成功'));
+}
+
+// 订单状态
+function setStatus(no,status){
+  fetch('/update-order-status',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'orderNo='+no+'&status='+status
+  }).then(()=>loadOrder());
+}
+
+// 删除订单
+function delOrder(no){
+  fetch('/admin/del-order',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'orderNo='+no
+  }).then(()=>loadOrder());
+}
+
+// 退出
+function logout(){
+  location.href='/admin-logout';
+}
+
+// 初始化
+window.onload = function(){
+  loadUser();
+  loadOrder();
+  loadString();
+}
+</script>
+
+</body>
+</html>
