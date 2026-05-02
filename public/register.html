@@ -1,59 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>注册</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注册</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
-body{background:#f3f4f6;padding:20px}
-.box{max-width:400px;margin:50px auto;background:#fff;padding:30px;border-radius:12px}
-h2{text-align:center;margin-bottom:20px}
-input{width:100%;padding:14px;margin:8px 0;border:1px solid #eee;border-radius:8px}
-.code{display:flex;gap:10px}
-.code button{white-space:nowrap;background:#007AFF;color:white;border:none;border-radius:8px}
-button{width:100%;padding:14px;background:#007AFF;color:white;border:none;border-radius:8px}
-a{display:block;text-align:center;margin-top:15px;color:#007AFF}
+*{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑";}
+body{background:#f3f4f6;padding:20px;}
+.box{max-width:400px;margin:50px auto;background:#fff;padding:30px;border-radius:12px;}
+h2{text-align:center;margin-bottom:20px;}
+input{width:100%;padding:14px;margin-bottom:12px;border:1px solid #ddd;border-radius:8px;font-size:16px;}
+button{width:100%;padding:14px;background:#007AFF;color:#fff;border:none;border-radius:8px;font-size:16px;}
+.to-login{text-align:center;margin-top:15px;}
+.to-login a{color:#007AFF;text-decoration:none;}
 </style>
 </head>
 <body>
 <div class="box">
-<h2>注册</h2>
-<form id="regForm">
-<input name="username" placeholder="用户名" required>
-<input type="password" name="password" placeholder="密码" required>
-<input id="phone" name="phone" placeholder="手机号" required>
-<div class="code">
-<input name="smsCode" placeholder="验证码" required>
-<button type="button" onclick="getCode()" id="codeBtn">获取验证码</button>
+  <h2>注册</h2>
+  <form id="regForm">
+    <input type="text" name="username" placeholder="请输入账号" required>
+    <input type="password" name="password" placeholder="请输入密码" required>
+    <button type="submit">注册</button>
+  </form>
+  <div class="to-login">
+    已有账号？<a href="login.html">去登录</a>
+  </div>
 </div>
-<button type="submit">注册</button>
-</form>
-<a href="login.html">去登录</a>
-</div>
+
 <script>
-let countdown=0;
-function getCode(){
-  let phone=document.getElementById("phone").value;
-  let btn=document.getElementById("codeBtn");
-  if(countdown>0)return;
-  fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone})})
-  .then(r=>r.json()).then(d=>{
-    if(d.code===200){
-      countdown=60;btn.disabled=true;
-      let timer=setInterval(()=>{
-        countdown--;btn.innerText=countdown+"秒重发";
-        if(countdown<=0){clearInterval(timer);btn.disabled=false;btn.innerText="获取验证码";}
-      },1000);
-    } else {
-      alert(d.msg);
-    }
-  });
-}
-document.getElementById("regForm").addEventListener("submit",e=>{
+document.getElementById('regForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  fetch("/register",{method:"POST",body:new URLSearchParams(new FormData(e.target))})
-  .then(r=>r.text()).then(html=>{document.querySelector(".box").innerHTML=html;});
+  fetch('/register', {
+    method: 'POST',
+    body: new URLSearchParams(new FormData(this))
+  }).then(res => res.text()).then(html => {
+    document.querySelector('.box').innerHTML = html;
+  });
 });
 </script>
 </body>
