@@ -1,59 +1,31 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
 <title>我的订单</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:微软雅黑}
-body{background:#f3f4f6;padding:20px}
-.box{max-width:600px;margin:30px auto;background:#fff;padding:25px;border-radius:12px}
-h2{text-align:center;margin-bottom:20px}
-.order{border:1px solid #eee;border-radius:8px;padding:15px;margin-bottom:10px}
-.pay-btn{padding:8px 14px;background:#07C160;color:white;border:none;border-radius:6px;margin-top:6px}
-a{color:#007AFF;text-decoration:none;margin-right:10px}
+body{background:#f5f5f5;padding:15px}
+.card{background:#fff;border-radius:12px;padding:15px;margin-bottom:12px}
+.status{color:red;font-weight:bold}
+.payimg{width:180px;display:block;margin:10px auto}
 </style>
-</head>
-<body>
-<div class="box">
-  <a href="index.html">返回下单</a>
-  <a href="logout">退出登录</a>
-  <h2>我的订单</h2>
-  <div id="orderList"></div>
-</div>
-
+<div id="app"></div>
 <script>
-function loadOrders() {
-  fetch("/api/my-orders")
-    .then(res => res.json())
-    .then(list => {
-      let html = "";
-      if (list.length === 0) {
-        html = "<p>暂无订单</p>";
-      } else {
-        list.forEach(item => {
-          html += `
-          <div class="order">
-            <p>订单号：${item.orderNo}</p>
-            <p>球线：${item.stringName}｜护线管：${item.pipe}</p>
-            <p>磅数：${item.mainTension}/${item.crossTension}</p>
-            <p>应付总价：¥${item.totalPrice}</p>
-            <p>状态：${item.status}</p>
-            ${item.status === "未支付" 
-              ? `<button class="pay-btn" onclick="goToPayPage('${item.orderNo}')">去支付</button>` 
-              : "<p style='color:#666'>请等待管理员处理</p>"}
-          </div>`;
-        });
-      }
-      document.getElementById("orderList").innerHTML = html;
-    });
-}
-
-function goToPayPage(orderNo) {
-  window.location.href = "/pay-weixin?orderNo=" + orderNo;
-}
-
-loadOrders();
+fetch('/api/my-orders').then(r=>r.json()).then(list=>{
+  let html = '';
+  list.forEach(o=>{
+    html+=`
+    <div class="card">
+      <div>订单：${o.orderNo}</div>
+      <div>线材：${o.stringName}</div>
+      <div>合计：${o.totalPrice}元</div>
+      <div>状态：<span class="status">${o.status}</span></div>
+      ${o.status=='待支付'?`
+      <div style="text-align:center;color:red">请扫码支付</div>
+      <img src="wx-pay-code.jpg" class="payimg">
+      <div style="text-align:center">支付后请联系商家</div>
+      `:''}
+    </div>`
+  });
+  document.getElementById('app').innerHTML=html;
+})
 </script>
-</body>
-</html>
